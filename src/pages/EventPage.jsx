@@ -66,7 +66,7 @@ const EventPage = () => {
 
   const confirmDelete = async () => {
     try {
-      await fetch(`https://tidal-vagabond-squid.glitch.me/api/events/${event.id}`, {
+      await fetch(`https://strengthened-resilient-nyala.glitch.me/events/${event.id}`, {
         method: 'DELETE',
       });
 
