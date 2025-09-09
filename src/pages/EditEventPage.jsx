@@ -18,16 +18,21 @@ const EditEventPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [allCategories, setAllCategories] = useState([]);
 
-  // Gebruik environment variable voor backend URL
+  // Backend URL vanuit environment variable
   const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
 
   useEffect(() => {
     if (!eventId) return;
 
+    if (!BACKEND_URL) {
+      console.error('REACT_APP_API_BASE_URL is niet ingesteld!');
+      return;
+    }
+
     setLoading(true);
     Promise.all([
-      fetch(`${BACKEND_URL}/events/${eventId}`),
-      fetch(`${BACKEND_URL}/categories`)
+      fetch(`${BACKEND_URL}/api/events/${eventId}`),
+      fetch(`${BACKEND_URL}/api/categories`)
     ])
       .then(([eventRes, catRes]) => {
         if (!eventRes.ok || !catRes.ok) throw new Error('Failed to fetch data');
@@ -40,7 +45,7 @@ const EditEventPage = () => {
         setEndTime(eventData.endTime || '');
         setImage(eventData.image || 'https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg');
         setCategoryIds(eventData.categoryIds || []);
-        setCreator(eventData.creator ? eventData.creator.name : '');
+        setCreator(eventData.creator || '');
         setAllCategories(categoriesData);
       })
       .catch(() => setErrorMessage('Er is iets mis gegaan bij het ophalen van het evenement.'))
@@ -70,7 +75,7 @@ const EditEventPage = () => {
       creator 
     };
 
-    fetch(`${BACKEND_URL}/events/${eventId}`, {
+    fetch(`${BACKEND_URL}/api/events/${eventId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(eventData)
@@ -137,9 +142,15 @@ const EditEventPage = () => {
         </FormControl>
 
         <FormControl mb={4} isRequired>
-          <FormLabel>Kies een categorie</FormLabel>
-          <Select value={categoryIds[0] || ''} onChange={(e) => setCategoryIds([e.target.value])}>
-            <option value="">Selecteer een categorie...</option>
+          <FormLabel>Kies categorieën</FormLabel>
+          <Select
+            multiple
+            value={categoryIds}
+            onChange={(e) => {
+              const selected = Array.from(e.target.selectedOptions, option => option.value);
+              setCategoryIds(selected);
+            }}
+          >
             {allCategories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
