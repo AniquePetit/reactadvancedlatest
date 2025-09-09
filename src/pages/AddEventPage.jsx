@@ -22,20 +22,30 @@ const AddEventPage = () => {
 
   // Categorieën ophalen bij mount
   useEffect(() => {
+    if (!BACKEND_URL) {
+      setErrorMessage('Backend URL is niet ingesteld!');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
-    fetch(`${BACKEND_URL}/categories`)
+
+    fetch(`${BACKEND_URL}/api/categories`)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch categories');
         return res.json();
       })
       .then((categories) => setAllCategories(categories))
-      .catch(() => setErrorMessage('Er is iets mis gegaan bij het ophalen van de categorieën.'))
+      .catch(() =>
+        setErrorMessage('Er is iets mis gegaan bij het ophalen van de categorieën.')
+      )
       .finally(() => setLoading(false));
   }, [BACKEND_URL]);
 
   // Form submission handler
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErrorMessage('');
 
     // Validatie
     if (new Date(endTime) <= new Date(startTime)) {
@@ -58,7 +68,7 @@ const AddEventPage = () => {
       creator,
     };
 
-    fetch(`${BACKEND_URL}/events`, {
+    fetch(`${BACKEND_URL}/api/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(eventData),
@@ -77,7 +87,9 @@ const AddEventPage = () => {
         });
         navigate('/');
       })
-      .catch(() => setErrorMessage('Er is iets mis gegaan bij het toevoegen van het evenement.'));
+      .catch(() =>
+        setErrorMessage('Er is iets mis gegaan bij het toevoegen van het evenement.')
+      );
   };
 
   // Form reset
