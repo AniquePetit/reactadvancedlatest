@@ -12,7 +12,8 @@ const EventPage = () => {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const BACKEND_URL = 'https://reactadvancedlatest.onrender.com';
+  // Gebruik environment variable voor backend URL
+  const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -44,7 +45,7 @@ const EventPage = () => {
     };
 
     fetchData();
-  }, [eventId]);
+  }, [eventId, BACKEND_URL]);
 
   const parseDate = (dateString) => {
     const date = new Date(dateString);
@@ -91,7 +92,6 @@ const EventPage = () => {
   };
 
   if (loading) return <Spinner size="xl" />;
-
   if (error) return <Text color="red.500" mt="4">{error}</Text>;
   if (!event) return <Text color="orange.500">Evenement niet gevonden.</Text>;
 
