@@ -20,7 +20,7 @@ const AddEventPage = () => {
   useEffect(() => {
     setLoading(true);
 
-    fetch('https://strengthened-resilient-nyala.glitch.me/categories')  // Glitch API URL
+    fetch('https://reactadvancedlatest.onrender.com/categories')  // Glitch API URL
       .then((response) => response.json())
       .then((categoriesData) => {
         setAllCategories(categoriesData); 
@@ -194,3 +194,4 @@ const AddEventPage = () => {
 };
 
 export default AddEventPage;
+
