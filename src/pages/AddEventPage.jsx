@@ -17,42 +17,32 @@ const AddEventPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [allCategories, setAllCategories] = useState([]);
 
+  const BACKEND_URL = 'https://reactadvancedlatest.onrender.com';
+
   useEffect(() => {
     setLoading(true);
-
-    fetch('https://reactadvancedlatest.onrender.com/categories')  // Glitch API URL
-      .then((response) => response.json())
-      .then((categoriesData) => {
-        setAllCategories(categoriesData); 
-        setLoading(false);
+    fetch(`${BACKEND_URL}/categories`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch categories');
+        return res.json();
       })
-      .catch((error) => {
-        console.error("Error fetching categories:", error);
-        setErrorMessage("Er is iets mis gegaan bij het ophalen van de categorieën.");
-        setLoading(false);
-      });
+      .then((categories) => setAllCategories(categories))
+      .catch(() => setErrorMessage('Er is iets mis gegaan bij het ophalen van de categorieën.'))
+      .finally(() => setLoading(false));
   }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-
-    // Controleer of de eindtijd na de starttijd komt
-    if (end <= start) {
+    if (new Date(endTime) <= new Date(startTime)) {
       setErrorMessage('De eindtijd moet na de starttijd liggen.');
       return;
     }
 
-    // Controleer of verplichte velden zijn ingevuld, inclusief categorie
-    if (!title || !startTime || !endTime || !creator || categoryIds.length === 0 || categoryIds[0] === '') {
+    if (!title || !startTime || !endTime || !creator || categoryIds.length === 0) {
       setErrorMessage('Titel, starttijd, eindtijd, creator en categorieën zijn verplicht.');
       return;
     }
-
-    // Zet de categoryIds om naar getallen
-    const numericCategoryIds = categoryIds.map((categoryId) => Number(categoryId));
 
     const eventData = {
       title,
@@ -60,19 +50,19 @@ const AddEventPage = () => {
       startTime,
       endTime,
       image,
-      categoryIds: numericCategoryIds, // Gebruik de genummerde categoryIds
+      categoryIds: categoryIds.map(Number),
       creator,
     };
 
-    // Verzenden van evenement naar de server
-    fetch('https://reactadvancedlatest.onrender.com/events', {  // Glitch API URL
+    fetch(`${BACKEND_URL}/events`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(eventData),
     })
-      .then((response) => response.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to add event');
+        return res.json();
+      })
       .then(() => {
         toast({
           title: 'Nieuw evenement toegevoegd',
@@ -83,10 +73,7 @@ const AddEventPage = () => {
         });
         navigate('/');
       })
-      .catch((error) => {
-        console.error('Fout bij het toevoegen van het evenement:', error);
-        setErrorMessage('Er is iets mis gegaan bij het toevoegen van het evenement.');
-      });
+      .catch(() => setErrorMessage('Er is iets mis gegaan bij het toevoegen van het evenement.'));
   };
 
   const resetForm = () => {
@@ -95,14 +82,12 @@ const AddEventPage = () => {
     setStartTime('');
     setEndTime('');
     setImage('');
-    setCategoryIds([]); // Reset categoryIds
+    setCategoryIds([]);
     setCreator('');
     setErrorMessage('');
   };
 
-  if (loading) {
-    return <Spinner size="xl" />;
-  }
+  if (loading) return <Spinner size="xl" />;
 
   return (
     <Box p={5}>
@@ -112,87 +97,49 @@ const AddEventPage = () => {
       <form onSubmit={handleSubmit}>
         <FormControl mb={4} isRequired>
           <FormLabel>Titel</FormLabel>
-          <Input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Titel van het evenement"
-          />
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titel van het evenement" />
         </FormControl>
 
         <FormControl mb={4}>
           <FormLabel>Beschrijving</FormLabel>
-          <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Beschrijving van het evenement"
-          />
+          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Beschrijving van het evenement" />
         </FormControl>
 
         <FormControl mb={4} isRequired>
           <FormLabel>Starttijd</FormLabel>
-          <Input
-            type="datetime-local"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-          />
+          <Input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
         </FormControl>
 
         <FormControl mb={4} isRequired>
           <FormLabel>Eindtijd</FormLabel>
-          <Input
-            type="datetime-local"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-          />
+          <Input type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
         </FormControl>
 
         <FormControl mb={4}>
           <FormLabel>Afbeelding URL</FormLabel>
-          <Input
-            type="text"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="URL van de afbeelding"
-          />
+          <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="URL van de afbeelding" />
         </FormControl>
 
         <FormControl mb={4} isRequired>
           <FormLabel>Kies een categorie</FormLabel>
-          <Select
-            value={categoryIds[0] || ''} // Only allow one category to be selected
-            onChange={(e) => setCategoryIds([e.target.value])} // Ensure it's an array with one value
-          >
-            <option value="">Selecteer een categorie...</option> {/* Lege optie toevoegen */}
-            {allCategories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
+          <Select value={categoryIds[0] || ''} onChange={(e) => setCategoryIds([e.target.value])}>
+            <option value="">Selecteer een categorie...</option>
+            {allCategories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </Select>
         </FormControl>
 
         <FormControl mb={4} isRequired>
           <FormLabel>Creator</FormLabel>
-          <Input
-            type="text"
-            value={creator}
-            onChange={(e) => setCreator(e.target.value)}
-            placeholder="Naam van de maker"
-          />
+          <Input value={creator} onChange={(e) => setCreator(e.target.value)} placeholder="Naam van de maker" />
         </FormControl>
 
-        <Button type="submit" colorScheme="teal" mt={4}>
-          Voeg Evenement Toe
-        </Button>
-        <Button type="button" colorScheme="gray" mt={4} ml={4} onClick={resetForm}>
-          Reset
-        </Button>
+        <Button type="submit" colorScheme="teal" mt={4}>Voeg Evenement Toe</Button>
+        <Button type="button" colorScheme="gray" mt={4} ml={4} onClick={resetForm}>Reset</Button>
       </form>
     </Box>
   );
 };
 
 export default AddEventPage;
-
-
