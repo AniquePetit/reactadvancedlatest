@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Box, Button, Input, Select, Spinner, Text, Image } from '@chakra-ui/react';
 import { Link } from 'react-router-dom';
 
-const CustomButton = ({ to, colorScheme, children }) => {
-  return (
-    <Button as={Link} to={to} colorScheme={colorScheme} mt="4">
-      {children}
-    </Button>
-  );
-};
+const CustomButton = ({ to, colorScheme, children }) => (
+  <Button as={Link} to={to} colorScheme={colorScheme} mt="4">
+    {children}
+  </Button>
+);
 
 const EventsPage = () => {
   const [events, setEvents] = useState([]);
@@ -19,28 +17,29 @@ const EventsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const BACKEND_URL = 'https://reactadvancedlatest.onrender.com';
+  // Gebruik environment variable
+  const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
 
   useEffect(() => {
     setLoading(true);
 
-    // Ophalen van de categorieën
+    // Ophalen van categorieën
     fetch(`${BACKEND_URL}/categories`)
-      .then((res) => res.ok ? res.json() : Promise.reject('Fout bij ophalen categorieën'))
+      .then((res) => (res.ok ? res.json() : Promise.reject('Fout bij ophalen categorieën')))
       .then((data) => setCategories(data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false));
 
-    // Ophalen van de evenementen
+    // Ophalen van evenementen
     fetch(`${BACKEND_URL}/events`)
-      .then((res) => res.ok ? res.json() : Promise.reject('Fout bij ophalen evenementen'))
+      .then((res) => (res.ok ? res.json() : Promise.reject('Fout bij ophalen evenementen')))
       .then((data) => {
         setEvents(data);
         setFilteredEvents(data);
       })
       .catch((err) => setError(err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [BACKEND_URL]);
 
   useEffect(() => {
     if (loading) return;
@@ -53,7 +52,7 @@ const EventsPage = () => {
       );
     }
 
-    if (selectedCategory && selectedCategory !== '') {
+    if (selectedCategory) {
       filtered = filtered.filter((event) =>
         event.categoryIds.includes(parseInt(selectedCategory))
       );
@@ -62,16 +61,15 @@ const EventsPage = () => {
     setFilteredEvents(filtered);
   }, [events, search, selectedCategory, loading]);
 
-  const getCategoryNames = (categoryIds) => {
-    return categoryIds
+  const getCategoryNames = (categoryIds) =>
+    categoryIds
       ? categoryIds
-          .map((categoryId) => {
-            const category = categories.find((cat) => cat.id === categoryId);
+          .map((id) => {
+            const category = categories.find((cat) => cat.id === id);
             return category ? category.name : null;
           })
           .filter(Boolean)
       : ['Onbekend'];
-  };
 
   if (loading) return <Spinner size="xl" />;
 
