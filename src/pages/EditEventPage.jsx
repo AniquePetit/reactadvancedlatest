@@ -3,7 +3,7 @@ import { Box, Button, Input, Textarea, FormControl, FormLabel, Select, Spinner, 
 import { useNavigate, useParams } from 'react-router-dom';
 
 const EditEventPage = () => {
-  const { eventId } = useParams();  // Haal het eventId op uit de URL
+  const { eventId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
 
@@ -12,96 +12,75 @@ const EditEventPage = () => {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [image, setImage] = useState('');
-  const [categoryIds, setCategoryIds] = useState([]); 
+  const [categoryIds, setCategoryIds] = useState([]);
   const [creator, setCreator] = useState('');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [allCategories, setAllCategories] = useState([]);
 
-  useEffect(() => {
-    if (eventId) {
-      setLoading(true);
+  const BACKEND_URL = 'https://reactadvancedlatest.onrender.com';
 
-      // Haal het evenement en de categorieën op via API calls naar de Glitch URL
-      Promise.all([
-        fetch(`https://strengthened-resilient-nyala.glitch.me/events/${eventId}`), // Event ophalen op basis van eventId
-        fetch(`https://strengthened-resilient-nyala.glitch.me/categories`), // Categorieën ophalen
-      ])
-        .then(([eventResponse, categoriesResponse]) => {
-          if (!eventResponse.ok || !categoriesResponse.ok) {
-            throw new Error('Error fetching event or categories');
-          }
-          return Promise.all([eventResponse.json(), categoriesResponse.json()]);
-        })
-        .then(([eventData, categoriesData]) => {
-          setTitle(eventData.title || '');
-          setDescription(eventData.description || '');
-          setStartTime(eventData.startTime || '');
-          setEndTime(eventData.endTime || '');
-          setImage(eventData.image || 'https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg');
-          setCategoryIds(eventData.categoryIds || []); 
-          setCreator(eventData.creator ? eventData.creator.name : '');
-          setAllCategories(categoriesData);  // Zet de categorieën in de state
-        })
-        .catch((error) => {
-          setErrorMessage("Error fetching event data");
-        })
-        .finally(() => setLoading(false));  // Stop met laden zodra de gegevens zijn opgehaald
-    }
+  useEffect(() => {
+    if (!eventId) return;
+
+    setLoading(true);
+    Promise.all([
+      fetch(`${BACKEND_URL}/events/${eventId}`),
+      fetch(`${BACKEND_URL}/categories`)
+    ])
+      .then(([eventRes, catRes]) => {
+        if (!eventRes.ok || !catRes.ok) throw new Error('Failed to fetch data');
+        return Promise.all([eventRes.json(), catRes.json()]);
+      })
+      .then(([eventData, categoriesData]) => {
+        setTitle(eventData.title || '');
+        setDescription(eventData.description || '');
+        setStartTime(eventData.startTime || '');
+        setEndTime(eventData.endTime || '');
+        setImage(eventData.image || 'https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg');
+        setCategoryIds(eventData.categoryIds || []);
+        setCreator(eventData.creator ? eventData.creator.name : '');
+        setAllCategories(categoriesData);
+      })
+      .catch(() => setErrorMessage('Er is iets mis gegaan bij het ophalen van het evenement.'))
+      .finally(() => setLoading(false));
   }, [eventId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-
-    // Valideer dat de eindtijd na de starttijd ligt
-    if (end <= start) {
-      setErrorMessage('End time must be after start time.');
+    if (new Date(endTime) <= new Date(startTime)) {
+      setErrorMessage('De eindtijd moet na de starttijd liggen.');
       return;
     }
 
-    // Controleer of verplichte velden ingevuld zijn
     if (!title || !startTime || !endTime || !creator || categoryIds.length === 0) {
-      setErrorMessage('Title, start time, end time, creator, and categories are required.');
+      setErrorMessage('Titel, starttijd, eindtijd, creator en categorieën zijn verplicht.');
       return;
     }
 
-    const eventData = {
-      title,
-      description,
-      startTime,
-      endTime,
-      image,
-      categoryIds, 
-      creator,
-    };
+    const eventData = { title, description, startTime, endTime, image, categoryIds: categoryIds.map(Number), creator };
 
-    // Bepaal de URL en het HTTP-methode voor de POST of PUT
-    const url = eventId ? `https://strengthened-resilient-nyala.glitch.me/events/${eventId}` : `https://strengthened-resilient-nyala.glitch.me/events`; // Glitch API URL
-    const method = eventId ? 'PUT' : 'POST';
-
-    // Verstuur de data naar de server
-    fetch(url, {
-      method,
+    fetch(`${BACKEND_URL}/events/${eventId}`, {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(eventData),
+      body: JSON.stringify(eventData)
     })
-      .then((response) => response.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to update event');
+        return res.json();
+      })
       .then(() => {
         toast({
-          title: eventId ? 'Event Updated' : 'New Event Added',
-          description: eventId ? 'Event updated successfully.' : 'Event added successfully.',
+          title: 'Evenement bijgewerkt',
+          description: 'Het evenement is succesvol bijgewerkt.',
           status: 'success',
           duration: 3000,
           isClosable: true,
         });
-        navigate('/');  // Navigeer naar de homepagina na het opslaan
+        navigate('/');
       })
-      .catch((error) => {
-        setErrorMessage('Error saving event.');
-      });
+      .catch(() => setErrorMessage('Er is iets mis gegaan bij het bijwerken van het evenement.'));
   };
 
   const resetForm = () => {
@@ -115,60 +94,56 @@ const EditEventPage = () => {
     setErrorMessage('');
   };
 
-  if (loading) return <Spinner size="xl" />;  // Laad de spinner als de gegevens nog niet zijn geladen
+  if (loading) return <Spinner size="xl" />;
 
   return (
     <Box p={5}>
-      <h1>{eventId ? 'Edit Event' : 'Add New Event'}</h1>
+      <h1>{eventId ? 'Evenement Bewerken' : 'Nieuw Evenement Toevoegen'}</h1>
       {errorMessage && <div style={{ color: 'red' }}>{errorMessage}</div>}
 
       <form onSubmit={handleSubmit}>
         <FormControl mb={4} isRequired>
-          <FormLabel>Title</FormLabel>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event Title" />
+          <FormLabel>Titel</FormLabel>
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titel van het evenement" />
         </FormControl>
 
         <FormControl mb={4}>
-          <FormLabel>Description</FormLabel>
-          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Event Description" />
+          <FormLabel>Beschrijving</FormLabel>
+          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Beschrijving van het evenement" />
         </FormControl>
 
         <FormControl mb={4} isRequired>
-          <FormLabel>Start Time</FormLabel>
+          <FormLabel>Starttijd</FormLabel>
           <Input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
         </FormControl>
 
         <FormControl mb={4} isRequired>
-          <FormLabel>End Time</FormLabel>
+          <FormLabel>Eindtijd</FormLabel>
           <Input type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
         </FormControl>
 
         <FormControl mb={4}>
-          <FormLabel>Image URL</FormLabel>
-          <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="Image URL" />
+          <FormLabel>Afbeelding URL</FormLabel>
+          <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="URL van de afbeelding" />
         </FormControl>
 
         <FormControl mb={4} isRequired>
-          <FormLabel>Categories</FormLabel>
-          <Select
-            value={categoryIds[0] || ''}
-            onChange={(e) => setCategoryIds([e.target.value])}
-          >
-            {allCategories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
+          <FormLabel>Kies een categorie</FormLabel>
+          <Select value={categoryIds[0] || ''} onChange={(e) => setCategoryIds([e.target.value])}>
+            <option value="">Selecteer een categorie...</option>
+            {allCategories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </Select>
         </FormControl>
 
         <FormControl mb={4} isRequired>
           <FormLabel>Creator</FormLabel>
-          <Input value={creator} onChange={(e) => setCreator(e.target.value)} placeholder="Creator Name" />
+          <Input value={creator} onChange={(e) => setCreator(e.target.value)} placeholder="Naam van de maker" />
         </FormControl>
 
         <Button type="submit" colorScheme="teal" mt={4}>
-          {eventId ? 'Save Event' : 'Add Event'}
+          {eventId ? 'Sla Evenement op' : 'Voeg Evenement Toe'}
         </Button>
         <Button type="button" colorScheme="gray" mt={4} ml={4} onClick={resetForm}>
           Reset
