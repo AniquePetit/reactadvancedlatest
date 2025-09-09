@@ -17,8 +17,10 @@ const AddEventPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [allCategories, setAllCategories] = useState([]);
 
-  const BACKEND_URL = 'https://reactadvancedlatest.onrender.com';
+  // Gebruik environment variable voor backend URL
+  const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
 
+  // Categorieën ophalen bij mount
   useEffect(() => {
     setLoading(true);
     fetch(`${BACKEND_URL}/categories`)
@@ -29,11 +31,13 @@ const AddEventPage = () => {
       .then((categories) => setAllCategories(categories))
       .catch(() => setErrorMessage('Er is iets mis gegaan bij het ophalen van de categorieën.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [BACKEND_URL]);
 
+  // Form submission handler
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    // Validatie
     if (new Date(endTime) <= new Date(startTime)) {
       setErrorMessage('De eindtijd moet na de starttijd liggen.');
       return;
@@ -76,6 +80,7 @@ const AddEventPage = () => {
       .catch(() => setErrorMessage('Er is iets mis gegaan bij het toevoegen van het evenement.'));
   };
 
+  // Form reset
   const resetForm = () => {
     setTitle('');
     setDescription('');
@@ -97,32 +102,55 @@ const AddEventPage = () => {
       <form onSubmit={handleSubmit}>
         <FormControl mb={4} isRequired>
           <FormLabel>Titel</FormLabel>
-          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titel van het evenement" />
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Titel van het evenement"
+          />
         </FormControl>
 
         <FormControl mb={4}>
           <FormLabel>Beschrijving</FormLabel>
-          <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Beschrijving van het evenement" />
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Beschrijving van het evenement"
+          />
         </FormControl>
 
         <FormControl mb={4} isRequired>
           <FormLabel>Starttijd</FormLabel>
-          <Input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          <Input
+            type="datetime-local"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+          />
         </FormControl>
 
         <FormControl mb={4} isRequired>
           <FormLabel>Eindtijd</FormLabel>
-          <Input type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          <Input
+            type="datetime-local"
+            value={endTime}
+            onChange={(e) => setEndTime(e.target.value)}
+          />
         </FormControl>
 
         <FormControl mb={4}>
           <FormLabel>Afbeelding URL</FormLabel>
-          <Input value={image} onChange={(e) => setImage(e.target.value)} placeholder="URL van de afbeelding" />
+          <Input
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            placeholder="URL van de afbeelding"
+          />
         </FormControl>
 
         <FormControl mb={4} isRequired>
           <FormLabel>Kies een categorie</FormLabel>
-          <Select value={categoryIds[0] || ''} onChange={(e) => setCategoryIds([e.target.value])}>
+          <Select
+            value={categoryIds[0] || ''}
+            onChange={(e) => setCategoryIds([e.target.value])}
+          >
             <option value="">Selecteer een categorie...</option>
             {allCategories.map((cat) => (
               <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -132,7 +160,11 @@ const AddEventPage = () => {
 
         <FormControl mb={4} isRequired>
           <FormLabel>Creator</FormLabel>
-          <Input value={creator} onChange={(e) => setCreator(e.target.value)} placeholder="Naam van de maker" />
+          <Input
+            value={creator}
+            onChange={(e) => setCreator(e.target.value)}
+            placeholder="Naam van de maker"
+          />
         </FormControl>
 
         <Button type="submit" colorScheme="teal" mt={4}>Voeg Evenement Toe</Button>
