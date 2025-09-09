@@ -18,7 +18,8 @@ const EditEventPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [allCategories, setAllCategories] = useState([]);
 
-  const BACKEND_URL = 'https://reactadvancedlatest.onrender.com';
+  // Gebruik environment variable voor backend URL
+  const BACKEND_URL = process.env.REACT_APP_API_BASE_URL;
 
   useEffect(() => {
     if (!eventId) return;
@@ -44,7 +45,7 @@ const EditEventPage = () => {
       })
       .catch(() => setErrorMessage('Er is iets mis gegaan bij het ophalen van het evenement.'))
       .finally(() => setLoading(false));
-  }, [eventId]);
+  }, [eventId, BACKEND_URL]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -59,7 +60,15 @@ const EditEventPage = () => {
       return;
     }
 
-    const eventData = { title, description, startTime, endTime, image, categoryIds: categoryIds.map(Number), creator };
+    const eventData = { 
+      title, 
+      description, 
+      startTime, 
+      endTime, 
+      image, 
+      categoryIds: categoryIds.map(Number), 
+      creator 
+    };
 
     fetch(`${BACKEND_URL}/events/${eventId}`, {
       method: 'PUT',
