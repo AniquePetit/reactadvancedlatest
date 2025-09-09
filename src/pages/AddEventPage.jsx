@@ -65,7 +65,7 @@ const AddEventPage = () => {
     };
 
     // Verzenden van evenement naar de server
-    fetch('https://strengthened-resilient-nyala.glitch.me/events', {  // Glitch API URL
+    fetch('https://reactadvancedlatest.onrender.com/events', {  // Glitch API URL
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -194,4 +194,5 @@ const AddEventPage = () => {
 };
 
 export default AddEventPage;
+
 
