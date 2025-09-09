@@ -19,22 +19,24 @@ const EventsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const BACKEND_URL = 'https://reactadvancedlatest.onrender.com';
+
   useEffect(() => {
     setLoading(true);
 
     // Ophalen van de categorieën
-    fetch('https://strengthened-resilient-nyala.glitch.me/categories')  // Glitch API URL voor categorieën ophalen
-      .then((response) => response.ok ? response.json() : Promise.reject('Fout bij ophalen categorieën'))
+    fetch(`${BACKEND_URL}/categories`)
+      .then((res) => res.ok ? res.json() : Promise.reject('Fout bij ophalen categorieën'))
       .then((data) => setCategories(data))
       .catch((err) => setError(err))
       .finally(() => setLoading(false));
 
     // Ophalen van de evenementen
-    fetch('https://strengthened-resilient-nyala.glitch.me/events')  // Glitch API URL voor evenementen ophalen
-      .then((response) => response.ok ? response.json() : Promise.reject('Fout bij ophalen evenementen'))
+    fetch(`${BACKEND_URL}/events`)
+      .then((res) => res.ok ? res.json() : Promise.reject('Fout bij ophalen evenementen'))
       .then((data) => {
         setEvents(data);
-        setFilteredEvents(data); // Initiële lijst van evenementen
+        setFilteredEvents(data);
       })
       .catch((err) => setError(err))
       .finally(() => setLoading(false));
@@ -45,17 +47,15 @@ const EventsPage = () => {
 
     let filtered = events;
 
-    // Filteren op zoekterm
     if (search) {
       filtered = filtered.filter((event) =>
         event.title.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // Filteren op geselecteerde categorie, maar alleen als er een categorie is geselecteerd
     if (selectedCategory && selectedCategory !== '') {
       filtered = filtered.filter((event) =>
-        event.categoryIds.includes(parseInt(selectedCategory)) // Vergelijk ID's van categorieën
+        event.categoryIds.includes(parseInt(selectedCategory))
       );
     }
 
@@ -73,21 +73,12 @@ const EventsPage = () => {
       : ['Onbekend'];
   };
 
-  if (loading) {
-    return <Spinner size="xl" />;
-  }
+  if (loading) return <Spinner size="xl" />;
 
-  if (error) {
-    return (
-      <Text color="red.500" mt="4">
-        {error}
-      </Text>
-    );
-  }
+  if (error) return <Text color="red.500" mt="4">{error}</Text>;
 
   return (
     <Box p="4">
-      {/* Zoekveld */}
       <Input
         placeholder="Zoek evenementen"
         value={search}
@@ -95,7 +86,6 @@ const EventsPage = () => {
         mb="4"
       />
 
-      {/* Categorieën dropdown */}
       <Select
         placeholder="Selecteer een categorie"
         value={selectedCategory}
@@ -117,7 +107,7 @@ const EventsPage = () => {
           filteredEvents.map((event) => (
             <Box key={event.id} p="4" borderWidth="1px" borderRadius="lg">
               <Image
-                src={event.image ? event.image : 'https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg'}
+                src={event.image || 'https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg'}
                 alt={event.title}
                 boxSize="200px"
                 objectFit="cover"
